@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#c8a96e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="روزانه‌ام">
+<meta name="description" content="برنامه‌ریز روزانه شخصی با تاریخچه کامل">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>روزانه‌ام</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a12;
+  --surf: #111120;
+  --card: #16162a;
+  --card2: #1c1c32;
+  --border: #22223a;
+  --gold: #c8a96e;
+  --gold2: #e8c98e;
+  --gold-dim: rgba(200,169,110,.12);
+  --teal: #4ecdc4;
+  --rose: #e07b7b;
+  --violet: #8b7fdb;
+  --blue: #5b8dee;
+  --green: #6bcb77;
+  --text: #eeeaf8;
+  --muted: #5a5878;
+  --muted2: #8888aa;
+  --r: 18px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: 'Vazirmatn', sans-serif; color: var(--text); user-select: none; }
+
+/* NOISE */
+body::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E"); }
+
+/* SHELL */
+.shell { display: flex; flex-direction: column; height: 100%; max-width: 480px; margin: 0 auto; position: relative; overflow: hidden; }
+.status-bar { height: calc(var(--safe-top) + 8px); background: var(--surf); flex-shrink: 0; }
+
+/* TOP BAR */
+.topbar { background: var(--surf); border-bottom: 1px solid var(--border); padding: 10px 16px 12px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 10; }
+.topbar-title { font-size: 17px; font-weight: 900; color: var(--gold); letter-spacing: -0.3px; }
+.topbar-date { font-size: 10px; color: var(--muted2); margin-top: 1px; }
+.topbar-right { display: flex; gap: 6px; }
+.icon-btn { width: 34px; height: 34px; border-radius: 10px; background: var(--card); border: 1px solid var(--border); color: var(--muted2); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.icon-btn:active { transform: scale(.88); }
+.icon-btn.gold { border-color: rgba(200,169,110,.3); color: var(--gold); }
+
+/* SCROLL AREA */
+.scroll-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px 14px calc(76px + var(--safe-bot)); scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+.scroll-area::-webkit-scrollbar { display: none; }
+
+/* PAGES */
+.page { display: none; }
+.page.active { display: block; animation: fadeUp .28s cubic-bezier(.4,0,.2,1); }
+@keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+
+/* SECTION HEADING */
+.sh { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin: 18px 0 8px; }
+.sh::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+/* CARDS */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; }
+.card-label { font-size: 11px; font-weight: 700; color: var(--muted2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); display: inline-block; flex-shrink: 0; }
+
+/* MOOD */
+.mood-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 5px; }
+.mood-btn { background: var(--surf); border: 2px solid var(--border); border-radius: 12px; padding: 9px 2px; cursor: pointer; transition: all .2s; display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: 'Vazirmatn', sans-serif; }
+.mood-btn .me { font-size: 20px; }
+.mood-btn .ml { font-size: 9px; color: var(--muted); font-weight: 600; }
+.mood-btn.sel { border-color: var(--gold); background: var(--gold-dim); }
+.mood-btn.sel .ml { color: var(--gold); }
+.mood-btn:active { transform: scale(.92); }
+
+/* ENERGY */
+.energy-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.e-label { font-size: 11px; color: var(--muted2); white-space: nowrap; }
+.e-bars { display: flex; gap: 3px; flex: 1; }
+.e-bar { flex: 1; height: 5px; border-radius: 3px; background: var(--border); cursor: pointer; transition: all .2s; }
+.e-bar.on { background: var(--teal); }
+
+/* INPUTS */
+textarea, input[type=text] { width: 100%; background: var(--surf); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 13px; line-height: 1.7; padding: 11px 12px; resize: none; outline: none; transition: border-color .2s; user-select: text; -webkit-user-select: text; }
+textarea:focus, input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,169,110,.07); }
+::placeholder { color: var(--muted); }
+
+.col2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* BUTTONS */
+.btn { background: var(--gold); color: #0a0a12; border: none; border-radius: 11px; padding: 0 18px; height: 44px; font-family: 'Vazirmatn', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+.btn:active { transform: scale(.95); opacity: .88; }
+.btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.btn.sm { height: 36px; padding: 0 12px; font-size: 12px; border-radius: 9px; }
+.btn.full { width: 100%; justify-content: center; }
+.btn.teal { background: var(--teal); }
+.btn.rose { background: var(--rose); }
+.btn.violet { background: var(--violet); }
+
+/* ADD ROW */
+.add-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.add-row input { flex: 1; }
+
+/* TODO */
+.todo-list { display: flex; flex-direction: column; gap: 5px; }
+.todo-item { display: flex; align-items: center; gap: 8px; background: var(--surf); border: 1px solid var(--border); border-radius: 11px; padding: 10px 10px; transition: all .2s; }
+.todo-item.done { opacity: .4; }
+.todo-item.done .ti-text { text-decoration: line-through; }
+.ti-check { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border); background: transparent; cursor: pointer; transition: all .2s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+.ti-check.on { background: var(--teal); border-color: var(--teal); color: #0a0a12; }
+.ti-text { flex: 1; font-size: 13px; line-height: 1.4; }
+.ti-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 3px; border-radius: 5px; }
+.ti-del:active { background: rgba(224,123,123,.15); color: var(--rose); }
+
+/* PRIORITY */
+.p-row { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+.p-pill { padding: 5px 11px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid transparent; transition: all .15s; background: var(--surf); }
+.p-pill[data-p=high] { color: var(--rose); border-color: rgba(224,123,123,.25); }
+.p-pill[data-p=high].sel { background: rgba(224,123,123,.12); border-color: var(--rose); }
+.p-pill[data-p=med] { color: var(--gold); border-color: rgba(200,169,110,.25); }
+.p-pill[data-p=med].sel { background: rgba(200,169,110,.12); border-color: var(--gold); }
+.p-pill[data-p=low] { color: var(--teal); border-color: rgba(78,205,196,.25); }
+.p-pill[data-p=low].sel { background: rgba(78,205,196,.12); border-color: var(--teal); }
+
+/* HABITS */
+.habit-item { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.habit-item:last-child { border-bottom: none; }
+.h-icon { font-size: 18px; }
+.h-name { flex: 1; font-size: 13px; font-weight: 500; }
+.h-streak { font-size: 10px; color: var(--gold); font-weight: 700; background: var(--gold-dim); padding: 2px 7px; border-radius: 10px; }
+.h-check { width: 36px; height: 36px; border-radius: 10px; border: 2px solid var(--border); background: var(--surf); cursor: pointer; font-size: 18px; transition: all .2s; display: flex; align-items: center; justify-content: center; }
+.h-check.on { background: var(--teal); border-color: var(--teal); }
+.h-check:active { transform: scale(.86); }
+.h-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 3px; }
+
+/* STATS */
+.stats3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 8px; text-align: center; }
+.stat-n { font-size: 26px; font-weight: 900; color: var(--gold); }
+.stat-l { font-size: 10px; color: var(--muted2); margin-top: 2px; }
+
+/* RING */
+.ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ring-pct { font-size: 24px; font-weight: 900; color: var(--gold); }
+.ring-lbl { font-size: 10px; color: var(--muted2); }
+svg.ring { transform: rotate(-90deg); }
+.ring circle { transition: stroke-dashoffset .7s cubic-bezier(.4,0,.2,1); }
+
+/* STARS */
+.stars-row { display: flex; gap: 6px; }
+.star { font-size: 28px; cursor: pointer; opacity: .2; transition: all .2s; }
+.star.on { opacity: 1; transform: scale(1.08); }
+.star:active { transform: scale(.9); }
+
+/* TAGS */
+.tags-wrap { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.tag { background: rgba(139,127,219,.15); border: 1px solid rgba(139,127,219,.3); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--violet); cursor: pointer; transition: all .15s; }
+.tag:active { transform: scale(.92); }
+
+/* PREVIEW */
+.preview-line { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; line-height: 1.6; }
+.preview-line:last-child { border-bottom: none; }
+.preview-icon { font-size: 14px; flex-shrink: 0; }
+.preview-val { color: var(--muted2); }
+.preview-val strong { color: var(--text); }
+
+/* GRATITUDE */
+.grat-inputs { display: flex; flex-direction: column; gap: 7px; }
+.grat-input-wrap { display: flex; align-items: center; gap: 8px; }
+.grat-num { font-size: 16px; font-weight: 900; color: var(--gold); min-width: 18px; }
+
+/* ═══════════════ HISTORY PAGE ═══════════════ */
+.history-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.htab { flex: 1; padding: 10px; border-radius: 12px; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer; background: var(--card); border: 1px solid var(--border); color: var(--muted2); transition: all .2s; }
+.htab.active { background: var(--gold-dim); border-color: rgba(200,169,110,.4); color: var(--gold); }
+
+/* CALENDAR HEATMAP */
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cal-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.cal-nav { display: flex; gap: 6px; }
+.cal-nav-btn { width: 30px; height: 30px; border-radius: 8px; background: var(--card); border: 1px solid var(--border); color: var(--muted2); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.cal-nav-btn:active { transform: scale(.9); }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dow { text-align: center; font-size: 9px; font-weight: 700; color: var(--muted); padding: 3px 0; }
+.cal-day { aspect-ratio: 1; border-radius: 8px; cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; transition: all .18s; border: 1px solid transparent; }
+.cal-day.empty { background: transparent; cursor: default; }
+.cal-day.no-data { background: var(--surf); color: var(--muted); }
+.cal-day.has-data { color: var(--text); }
+.cal-day.score-0 { background: rgba(200,169,110,.05); }
+.cal-day.score-1 { background: rgba(200,169,110,.12); }
+.cal-day.score-2 { background: rgba(200,169,110,.22); }
+.cal-day.score-3 { background: rgba(200,169,110,.35); }
+.cal-day.score-4 { background: rgba(200,169,110,.55); }
+.cal-day.score-5 { background: rgba(200,169,110,.8); color: #0a0a12; }
+.cal-day.today { border-color: var(--gold); }
+.cal-day.selected { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(78,205,196,.2); }
+.cal-day:not(.empty):active { transform: scale(.88); }
+
+/* MOOD CHART */
+.chart-wrap { height: 140px; position: relative; overflow: hidden; }
+.chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 100%; padding-bottom: 20px; }
+.chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; height: 100%; justify-content: flex-end; cursor: pointer; }
+.chart-bar { width: 100%; border-radius: 4px 4px 0 0; transition: all .4s cubic-bezier(.4,0,.2,1); min-height: 3px; }
+.chart-bar-lbl { font-size: 8px; color: var(--muted); }
+.chart-bar-val { font-size: 8px; color: var(--muted2); }
+
+/* DAY DETAIL CARD */
+.day-detail { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-top: 10px; animation: fadeUp .25s ease; }
+.day-detail-title { font-size: 12px; font-weight: 700; color: var(--gold); margin-bottom: 10px; }
+.dd-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.dd-row:last-child { border-bottom: none; }
+.dd-icon { font-size: 14px; flex-shrink: 0; width: 20px; text-align: center; }
+.dd-key { color: var(--muted2); font-size: 11px; min-width: 60px; }
+.dd-val { color: var(--text); flex: 1; line-height: 1.5; }
+.dd-empty { text-align: center; padding: 20px; color: var(--muted); font-size: 12px; }
+
+/* MONTHLY STATS */
+.month-stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-bottom: 10px; }
+.mstat { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+.mstat-n { font-size: 22px; font-weight: 900; color: var(--gold); }
+.mstat-l { font-size: 10px; color: var(--muted2); margin-top: 2px; }
+.mstat-bar { height: 3px; background: var(--border); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.mstat-fill { height: 100%; border-radius: 3px; background: var(--gold); transition: width .6s ease; }
+
+/* LIST HISTORY */
+.hist-list { display: flex; flex-direction: column; gap: 6px; }
+.hist-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .18s; display: flex; align-items: center; gap: 10px; }
+.hist-item:active { transform: scale(.98); border-color: rgba(200,169,110,.3); }
+.hist-item-date { font-size: 11px; font-weight: 700; color: var(--muted2); min-width: 60px; }
+.hist-item-mood { font-size: 18px; }
+.hist-item-info { flex: 1; }
+.hist-item-title { font-size: 12px; font-weight: 600; color: var(--text); }
+.hist-item-sub { font-size: 10px; color: var(--muted2); margin-top: 2px; }
+.hist-item-score { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; background: var(--gold-dim); color: var(--gold); }
+
+/* BOTTOM NAV */
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--surf); border-top: 1px solid var(--border); padding: 8px 6px calc(8px + var(--safe-bot)); display: flex; justify-content: space-around; z-index: 100; }
+.nav-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; cursor: pointer; padding: 5px 10px; border-radius: 10px; transition: all .2s; font-family: 'Vazirmatn', sans-serif; min-width: 50px; }
+.nav-btn .nb-icon { font-size: 20px; transition: transform .2s; }
+.nav-btn .nb-label { font-size: 9px; color: var(--muted); font-weight: 600; }
+.nav-btn.active .nb-icon { transform: scale(1.15); }
+.nav-btn.active .nb-label { color: var(--gold); }
+.nav-btn:active { transform: scale(.88); }
+
+/* INSTALL BANNER */
+.install-banner { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; z-index: 200; background: linear-gradient(135deg, #1a1a2e, #16213e); border-bottom: 2px solid var(--gold); padding: calc(var(--safe-top) + 10px) 14px 12px; display: none; gap: 10px; align-items: center; }
+.install-banner.show { display: flex; }
+.install-banner .ib-text { flex: 1; font-size: 12px; }
+.install-banner .ib-text strong { color: var(--gold); font-size: 13px; display: block; margin-bottom: 1px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: calc(88px + var(--safe-bot)); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card2); border: 1px solid var(--border); border-radius: 20px; padding: 9px 18px; font-size: 12px; font-weight: 600; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,.5); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); white-space: nowrap; z-index: 300; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* EMPTY */
+.empty-state { text-align: center; padding: 28px 16px; color: var(--muted); font-size: 12px; }
+.empty-state .em-icon { font-size: 32px; margin-bottom: 6px; }
+
+.sum-hero { background: linear-gradient(135deg, var(--card) 0%, rgba(200,169,110,.05) 100%); border: 1px solid rgba(200,169,110,.18); }
+
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+
+select { background: var(--surf); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Vazirmatn', sans-serif; font-size: 12px; padding: 7px 10px; outline: none; cursor: pointer; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 400; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal { background: var(--surf); border-radius: 20px 20px 0 0; border: 1px solid var(--border); width: 100%; max-width: 480px; padding: 20px 16px calc(20px + var(--safe-bot)); max-height: 85vh; overflow-y: auto; transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); }
+.modal-overlay.show .modal { transform: translateY(0); }
+.modal-title { font-size: 15px; font-weight: 900; color: var(--gold); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+.modal-close { background: var(--card); border: 1px solid var(--border); border-radius: 8px; width: 30px; height: 30px; cursor: pointer; color: var(--muted2); font-size: 16px; display: flex; align-items: center; justify-content: center; }
+
+/* HABIT STREAK BADGE */
+.streak-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(200,169,110,.12); border: 1px solid rgba(200,169,110,.25); border-radius: 20px; padding: 2px 8px; font-size: 10px; color: var(--gold); font-weight: 700; }
+
+/* DB STATUS */
+.db-status { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; color: var(--muted); }
+.db-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="status-bar"></div>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">روزانه‌ام ✦</div>
+      <div class="topbar-date" id="topbar-date"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="db-status" id="db-status"><div class="db-dot" id="db-dot" style="background:var(--muted)"></div><span id="db-txt">...</span></div>
+      <button class="icon-btn gold" onclick="saveAll()" title="ذخیره">💾</button>
+    </div>
+  </div>
+
+  <!-- SCROLL AREA -->
+  <div class="scroll-area" id="scroll-area">
+
+    <!-- ═════ PAGE: DAILY ═════ -->
+    <div class="page active" id="page-daily">
+
+      <div class="sh">حال امروز</div>
+      <div class="card">
+        <div class="card-label"><span class="dot"></span>احساسم چطوره؟</div>
+        <div class="mood-grid">
+          <button class="mood-btn" onclick="pickMood(this,'😄','عالی')"><span class="me">😄</span><span class="ml">عالی</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'🙂','خوب')"><span class="me">🙂</span><span class="ml">خوب</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'😐','معمولی')"><span class="me">😐</span><span class="ml">معمولی</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'😔','بد')"><span class="me">😔</span><span class="ml">بد</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'😤','آشفته')"><span class="me">😤</span><span class="ml">آشفته</span></button>
+        </div>
+        <div class="energy-row">
+          <span class="e-label">⚡ انرژی</span>
+          <div class="e-bars" id="e-bars">
+            <div class="e-bar" onclick="setEnergy(1)"></div>
+            <div class="e-bar" onclick="setEnergy(2)"></div>
+            <div class="e-bar" onclick="setEnergy(3)"></div>
+            <div class="e-bar" onclick="setEnergy(4)"></div>
+            <div class="e-bar" onclick="setEnergy(5)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh">اتفاقات روز</div>
+      <div class="col2">
+        <div class="card">
+          <div class="card-label"><span class="dot" style="background:var(--teal)"></span>مثبت‌ها 🌟</div>
+          <textarea id="positives" rows="4" placeholder="اتفاقات خوب..."></textarea>
+        </div>
+        <div class="card">
+          <div class="card-label"><span class="dot" style="background:var(--rose)"></span>منفی‌ها 🌧️</div>
+          <textarea id="negatives" rows="4" placeholder="چی ناراحتت کرد؟"></textarea>
+        </div>
+      </div>
+
+      <div class="sh">احساس کلی</div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--violet)"></span>با جزئیات بنویس...</div>
+        <textarea id="feeling" rows="4" placeholder="امروز چطور بودی؟ چی تو ذهنت می‌گذشت؟"></textarea>
+      </div>
+
+      <div class="sh">درس روز</div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--gold)"></span>💡 یه چیزی که امروز یاد گرفتم</div>
+        <textarea id="lesson" rows="3" placeholder="چه چیز جدیدی فهمیدم..."></textarea>
+      </div>
+
+      <button class="btn full" onclick="saveAll()">💾 ذخیره روز</button>
+      <div style="height:8px"></div>
+    </div>
+
+    <!-- ═════ PAGE: TASKS ═════ -->
+    <div class="page" id="page-tasks">
+      <div class="sh">اضافه کردن وظیفه</div>
+      <div class="card">
+        <div class="p-row" id="priority-row">
+          <div class="p-pill sel" data-p="high" onclick="selectP(this)">🔴 مهم</div>
+          <div class="p-pill" data-p="med" onclick="selectP(this)">🟡 معمولی</div>
+          <div class="p-pill" data-p="low" onclick="selectP(this)">🟢 کم</div>
+        </div>
+        <div class="add-row">
+          <input type="text" id="task-input" placeholder="وظیفه جدید..." onkeydown="if(event.key==='Enter')addTask()">
+          <button class="btn sm" onclick="addTask()">+</button>
+        </div>
+      </div>
+
+      <div class="sh">🔴 مهم و اورژانسی</div>
+      <div class="todo-list" id="list-high"></div>
+      <div class="sh">🟡 معمولی</div>
+      <div class="todo-list" id="list-med"></div>
+      <div class="sh">🟢 کم اهمیت</div>
+      <div class="todo-list" id="list-low"></div>
+
+      <div class="sh">ذهن‌پاکی 🧠</div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--violet)"></span>هر چی تو ذهنته بریز اینجا</div>
+        <textarea id="brain-dump" rows="5" placeholder="افکار، ایده‌ها، نگرانی‌ها... بدون فیلتر"></textarea>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+
+    <!-- ═════ PAGE: HABITS ═════ -->
+    <div class="page" id="page-habits">
+      <div class="sh">اضافه کردن عادت</div>
+      <div class="card">
+        <div class="add-row">
+          <input type="text" id="habit-icon-in" placeholder="🏃" style="width:50px;flex:none;text-align:center;font-size:18px">
+          <input type="text" id="habit-name-in" placeholder="نام عادت..." onkeydown="if(event.key==='Enter')addHabit()">
+          <button class="btn sm" onclick="addHabit()">+</button>
+        </div>
+      </div>
+
+      <div class="sh">عادت‌های امروز</div>
+      <div class="card" id="habit-card">
+        <div class="todo-list" id="habit-list"></div>
+      </div>
+
+      <div class="sh">آمار امروز</div>
+      <div class="stats3">
+        <div class="stat-box"><div class="stat-n" id="h-done">0</div><div class="stat-l">انجام‌شده</div></div>
+        <div class="stat-box"><div class="stat-n" id="h-total">0</div><div class="stat-l">کل عادت‌ها</div></div>
+        <div class="stat-box"><div class="stat-n" id="h-pct">0%</div><div class="stat-l">موفقیت</div></div>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+
+    <!-- ═════ PAGE: NOTES ═════ -->
+    <div class="page" id="page-notes">
+      <div class="sh">سه‌تا ممنونی 🙏</div>
+      <div class="card">
+        <div class="grat-inputs">
+          <div class="grat-input-wrap"><span class="grat-num">۱</span><input type="text" id="grat1" placeholder="ممنونم از..."></div>
+          <div class="grat-input-wrap"><span class="grat-num">۲</span><input type="text" id="grat2" placeholder="ممنونم از..."></div>
+          <div class="grat-input-wrap"><span class="grat-num">۳</span><input type="text" id="grat3" placeholder="ممنونم از..."></div>
+        </div>
+      </div>
+
+      <div class="sh">یادداشت آزاد ✍️</div>
+      <div class="card">
+        <div class="add-row" style="margin-bottom:6px">
+          <input type="text" id="tag-in" placeholder="#تگ..." onkeydown="if(event.key==='Enter')addTag()">
+          <button class="btn sm ghost" onclick="addTag()"># تگ</button>
+        </div>
+        <div class="tags-wrap" id="tags-wrap"></div>
+        <textarea id="free-note" rows="6" placeholder="هر چیزی که می‌خوای..."></textarea>
+      </div>
+
+      <div class="sh">یادآوری فردا 🌙</div>
+      <div class="card">
+        <textarea id="tomorrow" rows="3" placeholder="فردا باید یادم باشه..."></textarea>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+
+    <!-- ═════ PAGE: SUMMARY ═════ -->
+    <div class="page" id="page-summary">
+      <div class="sh">امتیاز روزت</div>
+      <div class="card sum-hero" style="display:flex;align-items:center;gap:16px">
+        <div class="ring-wrap">
+          <svg class="ring" width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="var(--border)" stroke-width="6"/>
+            <circle id="ring-fg" cx="40" cy="40" r="32" fill="none" stroke="var(--gold)" stroke-width="6"
+              stroke-dasharray="201.1" stroke-dashoffset="201.1" stroke-linecap="round"/>
+          </svg>
+          <div class="ring-pct" id="ring-pct">0%</div>
+          <div class="ring-lbl">امتیاز کلی</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--muted2);margin-bottom:8px">ستاره بده به روزت:</div>
+          <div class="stars-row" id="stars-row">
+            <span class="star" onclick="setStar(1)">⭐</span>
+            <span class="star" onclick="setStar(2)">⭐</span>
+            <span class="star" onclick="setStar(3)">⭐</span>
+            <span class="star" onclick="setStar(4)">⭐</span>
+            <span class="star" onclick="setStar(5)">⭐</span>
+          </div>
+          <div id="star-lbl" style="font-size:11px;color:var(--muted2);margin-top:5px"></div>
+        </div>
+      </div>
+
+      <div class="sh">آمار روز</div>
+      <div class="stats3">
+        <div class="stat-box"><div class="stat-n" id="sum-tasks">0</div><div class="stat-l">وظایف انجام‌شده</div></div>
+        <div class="stat-box"><div class="stat-n" id="sum-habits">0%</div><div class="stat-l">عادت‌ها</div></div>
+        <div class="stat-box"><div class="stat-n" id="sum-mood">—</div><div class="stat-l">حال کلی</div></div>
+      </div>
+
+      <div class="sh">جمع‌بندی روز</div>
+      <div class="card">
+        <div class="card-label"><span class="dot"></span>در یک پاراگراف بنویس</div>
+        <textarea id="reflection" rows="4" placeholder="امروزت چطور بود؟ مهم‌ترین اتفاق چی بود؟"></textarea>
+      </div>
+
+      <div class="sh">خلاصه کامل</div>
+      <div class="card" id="preview-card">
+        <div id="preview-content"><div class="empty-state"><div class="em-icon">📊</div>دکمه زیر رو بزن</div></div>
+      </div>
+      <button class="btn full teal" onclick="buildPreview()">🔄 نمایش خلاصه روز</button>
+      <div style="height:6px"></div>
+      <button class="btn full ghost" onclick="saveAll()">💾 ذخیره و ثبت</button>
+      <div style="height:8px"></div>
+    </div>
+
+    <!-- ═════ PAGE: HISTORY ═════ -->
+    <div class="page" id="page-history">
+      <div class="history-tabs">
+        <div class="htab active" id="htab-cal" onclick="switchHistTab('cal')">📅 تقویم</div>
+        <div class="htab" id="htab-list" onclick="switchHistTab('list')">📋 لیست</div>
+        <div class="htab" id="htab-stats" onclick="switchHistTab('stats')">📈 آمار ماهانه</div>
+      </div>
+
+      <!-- CAL TAB -->
+      <div id="histview-cal">
+        <div class="cal-header">
+          <button class="cal-nav-btn" onclick="calPrev()">›</button>
+          <div class="cal-title" id="cal-month-title"></div>
+          <button class="cal-nav-btn" onclick="calNext()">‹</button>
+        </div>
+        <div class="card" style="padding:10px">
+          <div class="cal-grid" id="cal-dow-row">
+            <div class="cal-dow">ش</div>
+            <div class="cal-dow">ی</div>
+            <div class="cal-dow">د</div>
+            <div class="cal-dow">س</div>
+            <div class="cal-dow">چ</div>
+            <div class="cal-dow">پ</div>
+            <div class="cal-dow">ج</div>
+          </div>
+          <div class="cal-grid" id="cal-days-grid"></div>
+        </div>
+        <div id="cal-day-detail"></div>
+      </div>
+
+      <!-- LIST TAB -->
+      <div id="histview-list" style="display:none">
+        <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+          <select id="hist-month-sel" onchange="renderHistList()" style="flex:1"></select>
+          <button class="btn sm ghost" onclick="exportData()">📤 خروجی</button>
+        </div>
+        <div class="hist-list" id="hist-list-wrap"></div>
+      </div>
+
+      <!-- STATS TAB -->
+      <div id="histview-stats" style="display:none">
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <select id="stats-month-sel" onchange="renderMonthStats()" style="flex:1"></select>
+        </div>
+        <div class="month-stats" id="month-stats-grid"></div>
+        <div class="sh">نمودار حال روزانه</div>
+        <div class="card">
+          <div class="chart-wrap">
+            <div class="chart-bars" id="mood-chart-bars"></div>
+          </div>
+        </div>
+        <div class="sh">نمودار انرژی روزانه</div>
+        <div class="card">
+          <div class="chart-wrap">
+            <div class="chart-bars" id="energy-chart-bars"></div>
+          </div>
+        </div>
+        <div class="sh">نمودار امتیاز روزانه</div>
+        <div class="card">
+          <div class="chart-wrap">
+            <div class="chart-bars" id="score-chart-bars"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end scroll-area -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-daily" onclick="goPage('daily')">
+      <span class="nb-icon">☀️</span><span class="nb-label">روز من</span>
+    </button>
+    <button class="nav-btn" id="nav-tasks" onclick="goPage('tasks')">
+      <span class="nb-icon">✅</span><span class="nb-label">وظایف</span>
+    </button>
+    <button class="nav-btn" id="nav-habits" onclick="goPage('habits')">
+      <span class="nb-icon">🔥</span><span class="nb-label">عادت‌ها</span>
+    </button>
+    <button class="nav-btn" id="nav-notes" onclick="goPage('notes')">
+      <span class="nb-icon">📝</span><span class="nb-label">یادداشت</span>
+    </button>
+    <button class="nav-btn" id="nav-summary" onclick="goPage('summary');updateSummary()">
+      <span class="nb-icon">📊</span><span class="nb-label">برآیند</span>
+    </button>
+    <button class="nav-btn" id="nav-history" onclick="goPage('history');initHistoryPage()">
+      <span class="nb-icon">🗂️</span><span class="nb-label">تاریخچه</span>
+    </button>
+  </nav>
+</div>
+
+<!-- INSTALL BANNER -->
+<div class="install-banner" id="install-banner">
+  <span>📲</span>
+  <div class="ib-text">
+    <strong>نصب روزانه‌ام</strong>
+    مثل اپ واقعی روی گوشیت نصب کن!
+  </div>
+  <button class="btn sm" onclick="doInstall()">نصب</button>
+  <button class="btn sm ghost" onclick="dismissBanner()">✕</button>
+</div>
+
+<!-- DAY MODAL -->
+<div class="modal-overlay" id="day-modal" onclick="closeDayModal(event)">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-date-title">جزئیات روز</span>
+      <button class="modal-close" onclick="closeDayModal()">✕</button>
+    </div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// IndexedDB
+// ═══════════════════════════════════════════════════════
+const DB_NAME = 'roozanam_db';
+const DB_VER = 2;
+const STORE_DAYS = 'days';
+const STORE_HABITS_DEF = 'habits_def';
+
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE_DAYS)) {
+        const s = d.createObjectStore(STORE_DAYS, { keyPath: 'date' });
+        s.createIndex('yearMonth', 'yearMonth');
+      }
+      if (!d.objectStoreNames.contains(STORE_HABITS_DEF)) {
+        d.createObjectStore(STORE_HABITS_DEF, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbPut(store, val) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(val).onsuccess = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+function dbGet(store, key) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbGetAll(store) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbGetByIndex(store, index, val) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).index(index).getAll(val);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let S = {
+  date: todayKey(),
+  yearMonth: todayKey().slice(0,7),
+  mood:'', energy:0,
+  positives:'', negatives:'', feeling:'', lesson:'',
+  tasks:[], habits:[],
+  brainDump:'',
+  grat1:'',grat2:'',grat3:'',
+  freeNote:'', tags:[], tomorrow:'',
+  reflection:'', stars:0,
+  score: 0
+};
+
+let currentPriority = 'high';
+let deferredPrompt = null;
+let calYear, calMonth; // for calendar nav (Gregorian used internally)
+
+function todayKey() {
+  return new Date().toISOString().slice(0,10);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('load', async () => {
+  setDates();
+  setDOMStatus('⏳', 'var(--gold)');
+  try {
+    await openDB();
+    setDOMStatus('✓ ذخیره', 'var(--green)');
+    document.getElementById('db-dot').style.background = 'var(--green)';
+  } catch(e) {
+    setDOMStatus('خطا', 'var(--rose)');
+    document.getElementById('db-dot').style.background = 'var(--rose)';
+  }
+  await loadState();
+  syncDOMFromState();
+  renderTasks();
+  renderHabits();
+  renderTags();
+  registerSW();
+  initInstallPrompt();
+  const hash = location.hash.replace('#','');
+  if (hash) goPage(hash);
+
+  // Init calendar nav to current month
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+});
+
+function setDOMStatus(txt, color) {
+  document.getElementById('db-txt').textContent = txt;
+  document.getElementById('db-txt').style.color = color;
+}
+
+// ═══════════════════════════════════════════════════════
+// SERVICE WORKER
+// ═══════════════════════════════════════════════════════
+function registerSW() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// PWA INSTALL
+// ═══════════════════════════════════════════════════════
+function initInstallPrompt() {
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); deferredPrompt = e;
+    if (!localStorage.getItem('pwa-dismissed')) {
+      document.getElementById('install-banner').classList.add('show');
+    }
+  });
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('install-banner').classList.remove('show');
+    showToast('✅ اپ نصب شد!');
+  });
+}
+async function doInstall() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') showToast('🎉 در حال نصب...');
+  deferredPrompt = null; dismissBanner();
+}
+function dismissBanner() {
+  document.getElementById('install-banner').classList.remove('show');
+  localStorage.setItem('pwa-dismissed','1');
+}
+
+// ═══════════════════════════════════════════════════════
+// DATES
+// ═══════════════════════════════════════════════════════
+function setDates() {
+  const d = new Date();
+  const fa = d.toLocaleDateString('fa-IR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('topbar-date').textContent = fa;
+}
+
+function toFarsiDate(isoDate) {
+  const d = new Date(isoDate + 'T12:00:00');
+  return d.toLocaleDateString('fa-IR', { year:'numeric', month:'long', day:'numeric' });
+}
+
+function toFarsiDateShort(isoDate) {
+  const d = new Date(isoDate + 'T12:00:00');
+  return d.toLocaleDateString('fa-IR', { month:'short', day:'numeric' });
+}
+
+function getYearMonthOptions() {
+  // Returns list of "YYYY-MM" that exist in DB
+  return dbGetAll(STORE_DAYS).then(rows => {
+    const yms = [...new Set(rows.map(r => r.yearMonth || r.date.slice(0,7)))];
+    return yms.sort().reverse();
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function goPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const pg = document.getElementById('page-' + name);
+  const nb = document.getElementById('nav-' + name);
+  if (pg) pg.classList.add('active');
+  if (nb) nb.classList.add('active');
+  document.getElementById('scroll-area').scrollTop = 0;
+  if (name === 'summary') updateSummary();
+}
+
+// ═══════════════════════════════════════════════════════
+// MOOD & ENERGY
+// ═══════════════════════════════════════════════════════
+function pickMood(btn, emoji, label) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  S.mood = emoji + ' ' + label;
+  autoSave();
+}
+
+function setEnergy(n) {
+  S.energy = n;
+  document.querySelectorAll('.e-bar').forEach((b,i) => b.classList.toggle('on', i < n));
+  autoSave();
+}
+
+// ═══════════════════════════════════════════════════════
+// TASKS
+// ═══════════════════════════════════════════════════════
+function selectP(el) {
+  document.querySelectorAll('.p-pill').forEach(p => p.classList.remove('sel'));
+  el.classList.add('sel');
+  currentPriority = el.dataset.p;
+}
+
+function addTask() {
+  const inp = document.getElementById('task-input');
+  const txt = inp.value.trim(); if (!txt) return;
+  S.tasks.push({ id: Date.now(), text: txt, priority: currentPriority, done: false });
+  inp.value = '';
+  renderTasks(); autoSave(); showToast('✅ اضافه شد');
+}
+
+function renderTasks() {
+  ['high','med','low'].forEach(p => {
+    const list = document.getElementById('list-' + p);
+    const items = S.tasks.filter(t => t.priority === p);
+    if (!items.length) {
+      list.innerHTML = '<div class="empty-state"><div class="em-icon">📭</div>هنوز موردی نیست</div>';
+      return;
+    }
+    list.innerHTML = '';
+    items.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'todo-item' + (t.done ? ' done' : '');
+      div.innerHTML = `
+        <div class="ti-check ${t.done?'on':''}" onclick="toggleTask(${t.id})">${t.done?'✓':''}</div>
+        <span class="ti-text">${escHtml(t.text)}</span>
+        <button class="ti-del" onclick="delTask(${t.id})">✕</button>`;
+      list.appendChild(div);
+    });
+  });
+}
+
+function toggleTask(id) {
+  const t = S.tasks.find(t => t.id === id);
+  if (t) { t.done = !t.done; renderTasks(); autoSave(); }
+}
+function delTask(id) {
+  S.tasks = S.tasks.filter(t => t.id !== id);
+  renderTasks(); autoSave();
+}
+
+// ═══════════════════════════════════════════════════════
+// HABITS
+// ═══════════════════════════════════════════════════════
+async function addHabit() {
+  const name = document.getElementById('habit-name-in').value.trim(); if (!name) return;
+  const icon = document.getElementById('habit-icon-in').value.trim() || '✨';
+  const hDef = { id: Date.now(), name, icon };
+  // Save habit definition globally
+  if (db) {
+    try { await dbPut(STORE_HABITS_DEF, hDef); } catch(e) {}
+  }
+  S.habits.push({ ...hDef, done: false, streak: 0 });
+  document.getElementById('habit-name-in').value = '';
+  document.getElementById('habit-icon-in').value = '';
+  renderHabits(); autoSave(); showToast('🔥 عادت اضافه شد');
+}
+
+function renderHabits() {
+  const list = document.getElementById('habit-list');
+  if (!S.habits.length) {
+    list.innerHTML = '<div class="empty-state"><div class="em-icon">🌱</div>یه عادت اضافه کن!</div>';
+  } else {
+    list.innerHTML = '';
+    S.habits.forEach(h => {
+      const div = document.createElement('div');
+      div.className = 'habit-item';
+      div.innerHTML = `
+        <span class="h-icon">${h.icon}</span>
+        <span class="h-name">${escHtml(h.name)}</span>
+        ${h.streak > 1 ? `<span class="streak-badge">🔥 ${h.streak} روز</span>` : ''}
+        <div class="h-check ${h.done?'on':''}" onclick="toggleHabit(${h.id})">${h.done?'✓':''}</div>
+        <button class="h-del" onclick="delHabit(${h.id})">✕</button>`;
+      list.appendChild(div);
+    });
+  }
+  const done = S.habits.filter(h=>h.done).length;
+  const total = S.habits.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('h-done').textContent = done;
+  document.getElementById('h-total').textContent = total;
+  document.getElementById('h-pct').textContent = pct+'%';
+}
+
+function toggleHabit(id) {
+  const h = S.habits.find(h=>h.id===id);
+  if (h) { h.done=!h.done; renderHabits(); autoSave(); }
+}
+function delHabit(id) {
+  S.habits = S.habits.filter(h=>h.id!==id);
+  renderHabits(); autoSave();
+}
+
+// ═══════════════════════════════════════════════════════
+// TAGS
+// ═══════════════════════════════════════════════════════
+function addTag() {
+  const inp = document.getElementById('tag-in');
+  const t = inp.value.trim().replace(/^#/,''); if (!t) return;
+  if (!S.tags.includes(t)) { S.tags.push(t); renderTags(); autoSave(); }
+  inp.value = '';
+}
+function renderTags() {
+  const wrap = document.getElementById('tags-wrap');
+  wrap.innerHTML = '';
+  S.tags.forEach(tag => {
+    const el = document.createElement('span');
+    el.className = 'tag'; el.textContent = '#'+tag;
+    el.onclick = () => { S.tags=S.tags.filter(t=>t!==tag); renderTags(); autoSave(); };
+    wrap.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// STARS & RING
+// ═══════════════════════════════════════════════════════
+function setStar(n) {
+  S.stars = n;
+  const lbl = ['','خیلی بد 😞','بد 😕','معمولی 😐','خوب 😊','عالی 🌟'];
+  document.querySelectorAll('.star').forEach((s,i) => s.classList.toggle('on', i<n));
+  document.getElementById('star-lbl').textContent = lbl[n] || '';
+  updateRing(); autoSave();
+}
+
+function calcScore() {
+  const tDone = S.tasks.filter(t=>t.done).length, tTotal = S.tasks.length;
+  const hDone = S.habits.filter(h=>h.done).length, hTotal = S.habits.length;
+  let score=0, parts=0;
+  if (tTotal) { score+=tDone/tTotal; parts++; }
+  if (hTotal) { score+=hDone/hTotal; parts++; }
+  if (S.stars) { score+=S.stars/5; parts++; }
+  return parts ? Math.round(score/parts*100) : 0;
+}
+
+function updateRing() {
+  const pct = calcScore();
+  const circ = 201.1;
+  const offset = circ - (circ*pct/100);
+  document.getElementById('ring-fg').style.strokeDashoffset = offset;
+  document.getElementById('ring-pct').textContent = pct+'%';
+}
+
+// ═══════════════════════════════════════════════════════
+// SUMMARY
+// ═══════════════════════════════════════════════════════
+function updateSummary() {
+  syncStateFromDOM();
+  const tDone = S.tasks.filter(t=>t.done).length;
+  const hDone = S.habits.filter(h=>h.done).length;
+  const hTotal = S.habits.length;
+  document.getElementById('sum-tasks').textContent = tDone;
+  document.getElementById('sum-habits').textContent = hTotal ? Math.round(hDone/hTotal*100)+'%' : '—';
+  document.getElementById('sum-mood').textContent = S.mood ? S.mood.split(' ')[0] : '—';
+  updateRing();
+}
+
+function buildPreview() {
+  syncStateFromDOM(); updateSummary();
+  const lines = [];
+  if (S.mood) lines.push(['🎭','حال',S.mood]);
+  if (S.energy) lines.push(['⚡','انرژی','⚡'.repeat(S.energy)]);
+  const tDone = S.tasks.filter(t=>t.done).length;
+  if (S.tasks.length) lines.push(['✅','وظایف',`${tDone} از ${S.tasks.length} انجام شد`]);
+  const hDone = S.habits.filter(h=>h.done).length;
+  if (S.habits.length) lines.push(['🔥','عادت‌ها',`${hDone} از ${S.habits.length}`]);
+  if (S.positives) lines.push(['🌟','مثبت‌ها',S.positives.replace(/\n/g,'، ')]);
+  if (S.negatives) lines.push(['🌧️','منفی‌ها',S.negatives.replace(/\n/g,'، ')]);
+  const grats = [S.grat1,S.grat2,S.grat3].filter(Boolean);
+  if (grats.length) lines.push(['🙏','ممنونی',grats.join(' | ')]);
+  if (S.lesson) lines.push(['💡','درس',S.lesson]);
+  if (S.reflection) lines.push(['📖','جمع‌بندی',S.reflection]);
+  if (S.stars) lines.push(['⭐','امتیاز','⭐'.repeat(S.stars)]);
+
+  const html = lines.length
+    ? lines.map(([icon,key,val]) =>
+        `<div class="preview-line"><span class="preview-icon">${icon}</span><div class="preview-val"><strong>${key}:</strong> ${escHtml(val)}</div></div>`
+      ).join('')
+    : '<div class="empty-state"><div class="em-icon">📊</div>هنوز چیزی ثبت نشده</div>';
+
+  document.getElementById('preview-content').innerHTML = html;
+  showToast('📊 خلاصه آماده شد');
+}
+
+// ═══════════════════════════════════════════════════════
+// STORAGE (IndexedDB + localStorage fallback)
+// ═══════════════════════════════════════════════════════
+function syncStateFromDOM() {
+  S.positives = v('positives'); S.negatives = v('negatives');
+  S.feeling = v('feeling'); S.lesson = v('lesson');
+  S.brainDump = v('brain-dump');
+  S.grat1 = v('grat1'); S.grat2 = v('grat2'); S.grat3 = v('grat3');
+  S.freeNote = v('free-note'); S.tomorrow = v('tomorrow');
+  S.reflection = v('reflection');
+  S.score = calcScore();
+}
+
+function syncDOMFromState() {
+  set('positives',S.positives); set('negatives',S.negatives);
+  set('feeling',S.feeling); set('lesson',S.lesson);
+  set('brain-dump',S.brainDump);
+  set('grat1',S.grat1); set('grat2',S.grat2); set('grat3',S.grat3);
+  set('free-note',S.freeNote); set('tomorrow',S.tomorrow);
+  set('reflection',S.reflection);
+  if (S.energy) setEnergy(S.energy);
+  if (S.stars) setStar(S.stars);
+  if (S.mood) {
+    document.querySelectorAll('.mood-btn').forEach(b => {
+      const emoji = b.querySelector('.me').textContent;
+      if (S.mood.startsWith(emoji)) b.classList.add('sel');
+    });
+  }
+}
+
+async function saveState(showMsg) {
+  syncStateFromDOM();
+  S.score = calcScore();
+  S.date = todayKey();
+  S.yearMonth = S.date.slice(0,7);
+  const data = { ...S };
+  // IndexedDB
+  if (db) {
+    try {
+      await dbPut(STORE_DAYS, data);
+    } catch(e) {
+      // fallback
+    }
+  }
+  // localStorage fallback
+  try { localStorage.setItem('day_' + S.date, JSON.stringify(data)); } catch(e) {}
+  if (showMsg) showToast('💾 ذخیره شد!');
+}
+
+async function loadState() {
+  const key = todayKey();
+  let saved = null;
+  if (db) {
+    try { saved = await dbGet(STORE_DAYS, key); } catch(e) {}
+  }
+  if (!saved) {
+    try {
+      const ls = localStorage.getItem('day_' + key);
+      if (ls) saved = JSON.parse(ls);
+    } catch(e) {}
+  }
+  if (saved) S = { ...S, ...saved };
+}
+
+async function saveAll() {
+  await saveState(true);
+}
+
+let _autoSaveTimer = null;
+function autoSave() {
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(() => saveState(false), 800);
+}
+
+// ═══════════════════════════════════════════════════════
+// HISTORY PAGE
+// ═══════════════════════════════════════════════════════
+let currentHistTab = 'cal';
+let selectedCalDay = null;
+
+function switchHistTab(tab) {
+  currentHistTab = tab;
+  ['cal','list','stats'].forEach(t => {
+    document.getElementById('htab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('histview-' + t).style.display = t === tab ? '' : 'none';
+  });
+  if (tab === 'cal') renderCalendar();
+  else if (tab === 'list') { populateMonthSel('hist-month-sel'); renderHistList(); }
+  else if (tab === 'stats') { populateMonthSel('stats-month-sel'); renderMonthStats(); }
+}
+
+async function initHistoryPage() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  renderCalendar();
+}
+
+// ─── CALENDAR ───────────────────────────────────────────
+async function renderCalendar() {
+  // Get all day records for current month
+  const ym = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
+  let records = {};
+  if (db) {
+    try {
+      const rows = await dbGetByIndex(STORE_DAYS, 'yearMonth', ym);
+      rows.forEach(r => records[r.date] = r);
+    } catch(e) {}
+  }
+
+  // Title (Farsi month name)
+  const d = new Date(calYear, calMonth, 1);
+  const faMonth = d.toLocaleDateString('fa-IR', { year:'numeric', month:'long' });
+  document.getElementById('cal-month-title').textContent = faMonth;
+
+  // Build days grid
+  const grid = document.getElementById('cal-days-grid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+  // We use Sat=0 as first col for fa-IR
+  // Saturday = 6 in JS getDay()
+  const startOffset = (firstDay + 1) % 7; // shift so Sat=0
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const todayIso = todayKey();
+
+  // Empty cells
+  for (let i = 0; i < startOffset; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-day empty';
+    grid.appendChild(cell);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const iso = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const rec = records[iso];
+    const cell = document.createElement('div');
+    const faDay = day.toLocaleString('fa-IR');
+
+    let scoreClass = 'no-data';
+    if (rec) {
+      const sc = rec.score || 0;
+      if (sc >= 80) scoreClass = 'score-5';
+      else if (sc >= 60) scoreClass = 'score-4';
+      else if (sc >= 40) scoreClass = 'score-3';
+      else if (sc >= 20) scoreClass = 'score-2';
+      else if (sc > 0) scoreClass = 'score-1';
+      else scoreClass = 'score-0';
+    }
+
+    cell.className = `cal-day has-data ${scoreClass}`;
+    if (!rec) cell.className = 'cal-day no-data';
+    if (iso === todayIso) cell.classList.add('today');
+    if (iso === selectedCalDay) cell.classList.add('selected');
+
+    cell.textContent = faDay;
+    cell.onclick = () => showCalDayDetail(iso, rec);
+    grid.appendChild(cell);
+  }
+
+  // Legend
+  if (document.getElementById('cal-legend')) return;
+  const legend = document.createElement('div');
+  legend.id = 'cal-legend';
+  legend.style.cssText = 'display:flex;align-items:center;gap:4px;margin-top:10px;font-size:9px;color:var(--muted);justify-content:center';
+  legend.innerHTML = `<span>کم</span>${[1,2,3,4,5].map(i=>`<div style="width:14px;height:14px;border-radius:3px;background:rgba(200,169,110,${i*0.16})"></div>`).join('')}<span>زیاد</span>`;
+  document.getElementById('histview-cal').appendChild(legend);
+}
+
+function calPrev() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  selectedCalDay = null;
+  document.getElementById('cal-day-detail').innerHTML = '';
+  renderCalendar();
+}
+function calNext() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  selectedCalDay = null;
+  document.getElementById('cal-day-detail').innerHTML = '';
+  renderCalendar();
+}
+
+function showCalDayDetail(iso, rec) {
+  selectedCalDay = iso;
+  renderCalendar();
+
+  const detail = document.getElementById('cal-day-detail');
+  if (!rec) {
+    detail.innerHTML = `<div class="day-detail"><div class="day-detail-title">${toFarsiDate(iso)}</div><div class="dd-empty">📭 اطلاعاتی برای این روز ثبت نشده</div></div>`;
+    return;
+  }
+  detail.innerHTML = `<div class="day-detail">
+    <div class="day-detail-title">📅 ${toFarsiDate(iso)}</div>
+    ${buildDayRows(rec)}
+  </div>`;
+}
+
+function buildDayRows(rec) {
+  const rows = [];
+  if (rec.mood) rows.push(['🎭','حال',rec.mood]);
+  if (rec.energy) rows.push(['⚡','انرژی','⚡'.repeat(rec.energy)]);
+  if (rec.score !== undefined) rows.push(['🏆','امتیاز',rec.score + '%']);
+  if (rec.stars) rows.push(['⭐','ستاره','⭐'.repeat(rec.stars)]);
+  const tDone = (rec.tasks||[]).filter(t=>t.done).length;
+  if ((rec.tasks||[]).length) rows.push(['✅','وظایف',`${tDone} از ${rec.tasks.length}`]);
+  const hDone = (rec.habits||[]).filter(h=>h.done).length;
+  if ((rec.habits||[]).length) rows.push(['🔥','عادت‌ها',`${hDone} از ${rec.habits.length}`]);
+  if (rec.positives) rows.push(['🌟','مثبت‌ها',rec.positives]);
+  if (rec.negatives) rows.push(['🌧️','منفی‌ها',rec.negatives]);
+  const grats = [rec.grat1,rec.grat2,rec.grat3].filter(Boolean);
+  if (grats.length) rows.push(['🙏','ممنونی',grats.join(' / ')]);
+  if (rec.lesson) rows.push(['💡','درس',rec.lesson]);
+  if (rec.reflection) rows.push(['📖','جمع‌بندی',rec.reflection]);
+  if (!rows.length) return '<div class="dd-empty">📭 اطلاعات ناقص</div>';
+  return rows.map(([icon,key,val]) =>
+    `<div class="dd-row"><span class="dd-icon">${icon}</span><span class="dd-key">${key}:</span><span class="dd-val">${escHtml(val)}</span></div>`
+  ).join('');
+}
+
+// ─── LIST VIEW ───────────────────────────────────────────
+async function populateMonthSel(selId) {
+  const yms = await getYearMonthOptions();
+  const sel = document.getElementById(selId);
+  sel.innerHTML = '';
+  if (!yms.length) {
+    sel.innerHTML = '<option>هنوز داده‌ای نیست</option>';
+    return;
+  }
+  yms.forEach(ym => {
+    const opt = document.createElement('option');
+    opt.value = ym;
+    const d = new Date(ym + '-01T12:00:00');
+    opt.textContent = d.toLocaleDateString('fa-IR', { year:'numeric', month:'long' });
+    sel.appendChild(opt);
+  });
+}
+
+async function renderHistList() {
+  const sel = document.getElementById('hist-month-sel');
+  const ym = sel.value;
+  if (!ym || !db) return;
+
+  let records = [];
+  try { records = await dbGetByIndex(STORE_DAYS, 'yearMonth', ym); } catch(e) {}
+  records.sort((a,b) => b.date.localeCompare(a.date));
+
+  const wrap = document.getElementById('hist-list-wrap');
+  if (!records.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="em-icon">📭</div>هیچ رکوردی برای این ماه نیست</div>';
+    return;
+  }
+  wrap.innerHTML = '';
+  records.forEach(rec => {
+    const div = document.createElement('div');
+    div.className = 'hist-item';
+    const moodEmoji = rec.mood ? rec.mood.split(' ')[0] : '—';
+    const tDone = (rec.tasks||[]).filter(t=>t.done).length;
+    const hDone = (rec.habits||[]).filter(h=>h.done).length;
+    div.innerHTML = `
+      <div class="hist-item-date">${toFarsiDateShort(rec.date)}</div>
+      <div class="hist-item-mood">${moodEmoji}</div>
+      <div class="hist-item-info">
+        <div class="hist-item-title">${rec.reflection ? rec.reflection.slice(0,40)+'...' : '(بدون جمع‌بندی)'}</div>
+        <div class="hist-item-sub">✅${tDone} وظیفه &nbsp; 🔥${hDone} عادت</div>
+      </div>
+      <div class="hist-item-score">${rec.score||0}%</div>`;
+    div.onclick = () => openDayModal(rec);
+    wrap.appendChild(div);
+  });
+}
+
+function openDayModal(rec) {
+  document.getElementById('modal-date-title').textContent = '📅 ' + toFarsiDate(rec.date);
+  document.getElementById('modal-content').innerHTML = buildDayRows(rec);
+  document.getElementById('day-modal').classList.add('show');
+}
+function closeDayModal(e) {
+  if (!e || e.target === document.getElementById('day-modal') || e.type === 'click') {
+    document.getElementById('day-modal').classList.remove('show');
+  }
+}
+
+// ─── MONTHLY STATS ─────────────────────────────────────
+async function renderMonthStats() {
+  const sel = document.getElementById('stats-month-sel');
+  const ym = sel.value;
+  if (!ym || !db) return;
+
+  let records = [];
+  try { records = await dbGetByIndex(STORE_DAYS, 'yearMonth', ym); } catch(e) {}
+  records.sort((a,b) => a.date.localeCompare(b.date));
+
+  if (!records.length) {
+    document.getElementById('month-stats-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="em-icon">📭</div>داده‌ای نیست</div>';
+    return;
+  }
+
+  const totalDays = records.length;
+  const avgScore = Math.round(records.reduce((s,r) => s + (r.score||0), 0) / totalDays);
+  const avgEnergy = (records.reduce((s,r) => s + (r.energy||0), 0) / totalDays).toFixed(1);
+  const tasksTotal = records.reduce((s,r) => s + (r.tasks||[]).filter(t=>t.done).length, 0);
+  const habitsTotal = records.reduce((s,r) => s + (r.habits||[]).filter(h=>h.done).length, 0);
+  const bestDay = records.reduce((best,r) => r.score > (best.score||0) ? r : best, {});
+  const moodMap = {}; records.forEach(r => { if(r.mood) { const m=r.mood.split(' ')[0]; moodMap[m]=(moodMap[m]||0)+1; } });
+  const topMood = Object.entries(moodMap).sort((a,b)=>b[1]-a[1])[0];
+
+  const statsGrid = document.getElementById('month-stats-grid');
+  statsGrid.innerHTML = `
+    <div class="mstat"><div class="mstat-n">${totalDays}</div><div class="mstat-l">روزهای ثبت‌شده</div><div class="mstat-bar"><div class="mstat-fill" style="width:${Math.min(totalDays/30*100,100)}%"></div></div></div>
+    <div class="mstat"><div class="mstat-n">${avgScore}%</div><div class="mstat-l">میانگین امتیاز</div><div class="mstat-bar"><div class="mstat-fill" style="width:${avgScore}%"></div></div></div>
+    <div class="mstat"><div class="mstat-n">${avgEnergy}</div><div class="mstat-l">میانگین انرژی</div><div class="mstat-bar"><div class="mstat-fill" style="width:${avgEnergy/5*100}%;background:var(--teal)"></div></div></div>
+    <div class="mstat"><div class="mstat-n">${tasksTotal}</div><div class="mstat-l">کل وظایف انجام‌شده</div><div class="mstat-bar"><div class="mstat-fill" style="width:100%;background:var(--violet)"></div></div></div>
+    <div class="mstat"><div class="mstat-n">${habitsTotal}</div><div class="mstat-l">کل عادت‌های انجام‌شده</div><div class="mstat-bar"><div class="mstat-fill" style="width:100%;background:var(--rose)"></div></div></div>
+    <div class="mstat"><div class="mstat-n">${topMood ? topMood[0] : '—'}</div><div class="mstat-l">رایج‌ترین حال</div><div class="mstat-bar"><div class="mstat-fill" style="width:${topMood ? topMood[1]/totalDays*100 : 0}%;background:var(--gold2)"></div></div></div>
+  `;
+
+  // Mood chart (mood -> number)
+  const moodScore = { '😄':5,'🙂':4,'😐':3,'😔':2,'😤':1 };
+  renderBarChart('mood-chart-bars', records, r => moodScore[r.mood?.split(' ')[0]] || 0, 5, 'var(--violet)');
+  renderBarChart('energy-chart-bars', records, r => r.energy || 0, 5, 'var(--teal)');
+  renderBarChart('score-chart-bars', records, r => (r.score||0)/100*5, 5, 'var(--gold)');
+}
+
+function renderBarChart(containerId, records, valFn, maxVal, color) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  records.forEach(rec => {
+    const val = valFn(rec);
+    const pct = maxVal ? (val / maxVal * 100) : 0;
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-bar-wrap';
+    wrap.title = toFarsiDateShort(rec.date);
+    wrap.innerHTML = `
+      <div class="chart-bar-val">${val > 0 ? (Number.isInteger(val) ? val : val.toFixed(1)) : ''}</div>
+      <div class="chart-bar" style="height:${Math.max(pct,2)}%;background:${color};opacity:${0.4+pct/100*0.6}"></div>
+      <div class="chart-bar-lbl">${toFarsiDateShort(rec.date).split(' ')[1] || ''}</div>`;
+    wrap.onclick = () => openDayModal(rec);
+    container.appendChild(wrap);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════════
+async function exportData() {
+  if (!db) return;
+  try {
+    const all = await dbGetAll(STORE_DAYS);
+    const json = JSON.stringify(all, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `roozanam_export_${todayKey()}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast('📤 خروجی گرفته شد!');
+  } catch(e) { showToast('❌ خطا در خروجی'); }
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+const v = id => (document.getElementById(id)||{}).value || '';
+const set = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// auto-save on input
+document.addEventListener('input', e => {
+  if (['TEXTAREA','INPUT'].includes(e.target.tagName)) {
+    clearTimeout(window._at);
+    window._at = setTimeout(() => saveState(false), 700);
+  }
+});
+
+// Close modal on back gesture
+window.addEventListener('popstate', () => {
+  document.getElementById('day-modal').classList.remove('show');
+});
+</script>
+</body>
+</html>
